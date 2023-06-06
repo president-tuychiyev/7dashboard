@@ -1,10 +1,35 @@
 <script setup>
 import { LogoGoogle, LogoFacebook } from '@vicons/ionicons5'
+import router from '../router'
 import Logo from '../components/icon/Logo.vue'
-import axios from 'axios'
+import axios from '../api/axios'
+
+const details = reactive({
+    login: {
+        isEmpty: false,
+        value: null
+    },
+    password: {
+        isEmpty: false,
+        value: null
+    }
+})
 
 const signIn = async () => {
-    console.log((await axios.get('login')))
+    if (!details.login.value) {
+        details.login.isEmpty = true
+        return
+    }
+
+    if (!details.password.value) {
+        details.password.isEmpty = true
+        return
+    }
+
+    details.body = (await axios.post('admin/login', { login: details.login.value, password: details.password.value })).data.data
+    $cookies.set('AUTH_TOKEN', details.body.token?.body, details.body.token?.expired_at)
+
+    router.push({ name: 'cabinet.home' })
 }
 
 </script>
@@ -37,8 +62,9 @@ const signIn = async () => {
                             <label for="email" class="block mb-2 text-sm text-gray-600 dark:text-gray-200">
                                 Ваш e-mail
                             </label>
-                            <input type="email" name="email" id="email" placeholder="example@example.com"
-                                class="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-md dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-teal-500 dark:focus:border-teal-500 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" />
+                            <input type="email" v-model="details.login.value" placeholder="example@example.com"
+                                class="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border rounded-md dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 focus:border-teal-500 dark:focus:border-teal-500 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"
+                                :class="details.login.isEmpty ? 'border-red-200 dark:border-red-700 ' : 'border-gray-200 dark:border-gray-700'" />
                         </div>
 
                         <div class="mt-6">
@@ -46,8 +72,9 @@ const signIn = async () => {
                                 <label for="password" class="text-sm text-gray-600 dark:text-gray-200">Пароль</label>
                             </div>
 
-                            <input type="password" name="password" id="password" placeholder="Введите пароль"
-                                class="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-md dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-teal-500 dark:focus:border-teal-500 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40" />
+                            <input type="password" v-model="details.password.value" placeholder="Введите пароль"
+                                class="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border rounded-md dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 focus:border-teal-500 dark:focus:border-teal-500 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"
+                                :class="details.password.isEmpty ? 'border-red-200 dark:border-red-700 ' : 'border-gray-200 dark:border-gray-700'" />
                         </div>
 
                         <div class="mt-6">

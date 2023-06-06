@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useBreadcrumb } from '../stores/Breadcrumb'
 import { useMenu } from '../stores/menu'
 
+const AUTH_TOKEN = $cookies.get('AUTH_TOKEN') ?? null
+
 const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -16,13 +18,13 @@ const router = createRouter({
             name: 'login',
             component: () => import('../auth/Login.vue'),
             meta: { title: "Login" },
-            // beforeEnter(to, from, next) {
-            //     if (is_user_logged()) {
-            //         next({ name: 'cabinet.home' })
-            //     } else {
-            //         next()
-            //     }
-            // },
+            beforeEnter(to, from, next) {
+                if (AUTH_TOKEN) {
+                    next({ name: 'cabinet.home' })
+                } else {
+                    next()
+                }
+            },
         },
         {
             path: '/cabinet',
@@ -41,15 +43,7 @@ const router = createRouter({
                     component: () => import('../view/User.vue'),
                     meta: { title: 'Users page' }
                 }
-            ],
-            beforeEnter(to, from, next) {
-                next()
-                // if (is_user_logged()) {
-                //     next()
-                // } else {
-                //     next({ name: 'login' })
-                // }
-            },
+            ]
         }
     ],
 })
