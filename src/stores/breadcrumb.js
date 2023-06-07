@@ -2,10 +2,12 @@ import router from "../router"
 
 export const useBreadcrumb = defineStore('breadcrumb', () => {
     const breadcrumbs = reactive({
+        thisTitle: null,
         items: JSON.parse(localStorage.getItem('breadcrumbs'))
     })
 
     const add = (name, routerName, closable = true) => {
+        breadcrumbs.thisTitle = name
         let check = false
         breadcrumbs.items.map((item) => {
             item.isActive = false
