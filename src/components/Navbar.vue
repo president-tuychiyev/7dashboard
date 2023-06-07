@@ -15,7 +15,7 @@ const details = reactive({
 })
 
 const defaultAvatar = () => {
-    return details.user?.name.split(' ').map(word => word[0])[0] + details.user?.name.split(' ').map(word => word[0])[1]
+    return details.user?.firstName.split('')[0] + details.user?.lastName.split('')[0]
 }
 
 const openFullscreen = () => {

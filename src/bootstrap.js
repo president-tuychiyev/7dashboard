@@ -20,3 +20,8 @@ localStorage.getItem('breadcrumbs') === null ? localStorage.setItem('breadcrumbs
         closable: false
     }]
 )) : false
+
+localStorage.getItem('settings') === null ? localStorage.setItem('settings', JSON.stringify({
+    isDark: false,
+    sideBarCollapsed: false
+})) : null
