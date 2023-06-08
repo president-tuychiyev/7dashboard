@@ -53,7 +53,7 @@ const userOption = (key) => {
 }
 </script>
 <template>
-    <n-layout-header class="flex items-center justify-between px-4">
+    <n-layout-header class="sticky top-0 z-50 h-14 shadow-sm flex items-center justify-between px-4">
         <p class="text-lg font-bold">{{ useBreadcrumb().breadcrumbs.thisTitle }}</p>
         <div class="flex items-center justify-center">
             <n-switch :default-value="details.theme" @update:value="useTheme().setTheme()">
@@ -78,4 +78,26 @@ const userOption = (key) => {
             </n-dropdown>
         </div>
     </n-layout-header>
+
+    <n-modal v-model:show="details.show.modal" preset="dialog">
+        <template #header>
+            <div>Профиль</div>
+        </template>
+        <div class="mt-4 flex row-auto">
+            <div
+                class="col-auto bg-green-500 rounded-full w-16 h-16 items-center justify-center font-bold text-xl flex text-white uppercase">
+                {{ defaultAvatar() }}
+            </div>
+            <div class="col-auto ml-3">
+                <span class="font-bold uppercase">Имя:</span>
+                {{ details.user.firstName }}
+                <br>
+                <span class="font-bold uppercase">Фамилия:</span>
+                {{ details.user.lastName }}
+                <br>
+                <span class="font-bold uppercase">Почта:</span>
+                {{ details.user.email }}
+            </div>
+        </div>
+    </n-modal>
 </template>
