@@ -1,4 +1,4 @@
-import { h, ref, reactive } from 'vue'
+import { h, ref, reactive, onMounted } from 'vue'
 import { NIcon } from 'naive-ui'
 import { defineStore } from 'pinia'
 
@@ -6,6 +6,7 @@ import { defineStore } from 'pinia'
 window.h = h
 window.ref = ref
 window.reactive = reactive
+window.onMounted = onMounted
 window.defineStore = defineStore
 
 window.renderIcon = (icon) => {
