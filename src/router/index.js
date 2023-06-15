@@ -83,8 +83,15 @@ const router = createRouter({
                     name: 'cabinet.new.zone',
                     component: () => import('../view/new/Zone.vue'),
                     meta: { title: 'Zones page' }
-                },
-            ]
+                }
+            ],
+            beforeEnter(to, from, next) {
+                if (!AUTH_TOKEN) {
+                    next({ name: 'login' })
+                } else {
+                    next()
+                }
+            },
         },
         {
             path: '/cabinet',
@@ -157,7 +164,14 @@ const router = createRouter({
                     component: () => import('../view/Promocode.vue'),
                     meta: { title: 'Promocodes page' }
                 },
-            ]
+            ],
+            beforeEnter(to, from, next) {
+                if (!AUTH_TOKEN) {
+                    next({ name: 'login' })
+                } else {
+                    next()
+                }
+            },
         }
     ],
 })

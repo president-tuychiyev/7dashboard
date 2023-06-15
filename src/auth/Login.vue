@@ -26,7 +26,7 @@ const signIn = async () => {
         return
     }
 
-    details.body = (await axios.post('admin/login', { login: details.login.value, password: details.password.value })).data.data
+    details.body = (await axios.post('login', { login: details.login.value, password: details.password.value })).data.data
     localStorage.setItem('user', JSON.stringify({
         id: details.body.id,
         email: details.body.email,
@@ -38,7 +38,8 @@ const signIn = async () => {
         role: details.body.role
     }))
     $cookies.set('AUTH_TOKEN', details.body.token?.body, details.body.token?.expired_at)
-    router.push({ name: 'cabinet.home' })
+    // router.push({ name: 'cabinet.home' })
+    window.location.href = window.location.href
 }
 
 </script>

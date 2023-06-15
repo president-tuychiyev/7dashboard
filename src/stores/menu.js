@@ -15,6 +15,7 @@ export const useMenu = defineStore('menu', () => {
             },
             {
                 label: () => h('div', {}, { default: () => ['Меню ', h(NTag, { bordered: false, type: 'info', class: 'rounded h-5 ml-2' }, { default: () => 'new' })] }),
+                key: 'menu.new',
                 icon: renderIcon(MenuOutline),
                 children: [
                     {

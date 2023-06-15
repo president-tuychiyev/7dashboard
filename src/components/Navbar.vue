@@ -46,7 +46,8 @@ const userOption = (key) => {
     if (key == 'logout') {
         $cookies.remove("AUTH_TOKEN")
         localStorage.removeItem('user')
-        router.push({ name: 'login' })
+        // router.push({ name: 'login' })
+        window.location.href = window.location.href
     } else if (key == 'profile') {
         details.show.modal = true
     }

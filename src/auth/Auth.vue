@@ -6,41 +6,40 @@ import Breadcrumb from '../components/Breadcrumb.vue'
 </script>
 <template>
     <n-config-provider :theme="useTheme().isDark ? darkTheme : null">
-        <n-space vertical>
-            <n-layout>
-                <n-layout has-sider>
-                    <!-- begin::sidebar -->
-                    <Sidebar />
-                    <!-- end::sidebar -->
 
-                    <!-- begin::content -->
-                    <n-layout-content class="h-screen">
-                        <!-- begin::header -->
+        <n-layout>
+            <n-layout has-sider>
+                <!-- begin::sidebar -->
+                <Sidebar />
+                <!-- end::sidebar -->
+
+                <!-- begin::content -->
+                <n-layout-content>
+                    <div class="absolute inset-x-0">
+                        <!-- begin::navbar -->
                         <Navbar />
-                        <!-- end::header -->
-
+                        <!-- end::navbar -->
                         <!-- begin::breadcrumb -->
                         <Breadcrumb :class="useTheme().isDark ? 'bg-black' : 'bg-slate-100'" />
-                        <!-- end::breadcrumb -->
+                    </div>
+                    <!-- end::breadcrumb -->
 
-                        <!-- begin::content -->
-                        <main class="h-screen w-full px-2 relative"
-                            :class="useTheme().isDark ? 'bg-black' : 'bg-slate-100'">
-                            <router-view v-slot="{ Component }">
-                                <Transition enter-from-class="opacity-0" enter-active-class="transition duration-500">
+                    <!-- begin::content -->
+                    <main class="w-full h-screen max-h-screen px-2 pt-[7rem] relative"
+                        :class="useTheme().isDark ? 'bg-black' : 'bg-slate-100'">
+                        <router-view v-slot="{ Component }">
+                            <Transition enter-from-class="opacity-0" enter-active-class="transition duration-500">
+                                <div>
                                     <component :is="Component" />
-                                </Transition>
-                            </router-view>
-                        </main>
-                        <!-- end:content -->
+                                </div>
+                            </Transition>
+                        </router-view>
+                    </main>
+                    <!-- end:content -->
 
-                        <!-- begin::footer -->
-                        <Footer />
-                        <!-- end::footer -->
-                    </n-layout-content>
-                    <!-- end::content -->
-                </n-layout>
+                </n-layout-content>
+                <!-- end::content -->
             </n-layout>
-        </n-space>
+        </n-layout>
     </n-config-provider>
 </template>
