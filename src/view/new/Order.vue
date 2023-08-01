@@ -4,7 +4,6 @@ import { Pencil, EyeOutline, Menu } from '@vicons/ionicons5'
 import moment from 'moment'
 import axios from '../../api/axios'
 import Table from '../../components/Table.vue'
-import { h } from 'vue'
 const orders = ref({ data: [] })
 const details = reactive({
     query: {
@@ -235,8 +234,6 @@ const filter = (filters, sourceColumn) => {
     }
 
     getOrders()
-    console.log(filters);
-    console.log(sourceColumn);
 }
 
 const sort = (sorter) => {
@@ -256,6 +253,6 @@ const pageSize = (size) => {
 }
 </script>
 <template>
-    <Table :data="orders.data" :column="details.columns" :filters="filter" :sort="sort" :striped="true"
-        :pagination="pagination" :pageSize="pageSize" />
+    <Table :data="orders.data" :column="details.columns" :filters="filter" :sort="sort" :pagination="pagination"
+        :pageSize="pageSize" />
 </template>

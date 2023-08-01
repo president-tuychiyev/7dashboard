@@ -176,11 +176,13 @@ const router = createRouter({
     ],
 })
 
-router.beforeEach((to, from) => {
+router.beforeEach((to, from, next) => {
+    document.title = to.meta.title
     if (to.name != 'login' && to.name != 'index') {
         useBreadcrumb().add(to.meta.title, to.name, to.meta.breadcrumbClosable ?? true)
         useMenu().setDefaultValue(to.name)
     }
+    next()
 })
 
 export default router

@@ -18,7 +18,7 @@ const collapseSidebar = () => {
 <template>
     <n-layout-sider :default-collapsed="details.collapse" @update:collapsed="collapseSidebar" bordered show-trigger="bar"
         collapse-mode="width" :collapsed-width="64" :width="230" :native-scrollbar="false" class="h-screen">
-        <RouterLink class="flex justify-center my-4" :to="{ name: 'cabinet.home' }">
+        <RouterLink class="flex justify-center my-4 mx-2" :to="{ name: 'cabinet.home' }">
             <Logo class="w-24" :class="useTheme().isDark ? 'fill-white' : 'fill-black'" />
         </RouterLink>
         <n-menu :value="useMenu().details.defaultValue" :default-value="useMenu().details.defaultValue"
