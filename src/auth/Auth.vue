@@ -2,6 +2,7 @@
 import { darkTheme } from 'naive-ui'
 import { useTheme } from '../stores/theme'
 import Breadcrumb from '../components/Breadcrumb.vue'
+import { useSpinStore } from '../stores/spin'
 
 </script>
 <template>
@@ -27,13 +28,15 @@ import Breadcrumb from '../components/Breadcrumb.vue'
                     <!-- begin::content -->
                     <main class="w-full h-screen max-h-screen px-2 pt-[7rem] relative"
                         :class="useTheme().isDark ? 'bg-black' : 'bg-slate-100'">
-                        <router-view v-slot="{ Component }">
-                            <Transition enter-from-class="opacity-0" enter-active-class="transition duration-500">
-                                <div>
-                                    <component :is="Component" />
-                                </div>
-                            </Transition>
-                        </router-view>
+                        <n-spin :show="useSpinStore().spin">
+                            <router-view v-slot="{ Component }">
+                                <Transition enter-from-class="opacity-0" enter-active-class="transition duration-500">
+                                    <div>
+                                        <component :is="Component" />
+                                    </div>
+                                </Transition>
+                            </router-view>
+                        </n-spin>
                     </main>
                     <!-- end:content -->
 

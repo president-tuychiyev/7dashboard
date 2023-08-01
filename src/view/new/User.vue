@@ -1,20 +1,22 @@
 <script setup>
 import { NButtonGroup, NButton, NPopconfirm } from 'naive-ui'
 import { Pencil, EyeOutline, TrashOutline, Add } from '@vicons/ionicons5'
+import { useTheme } from '../../stores/theme'
 import axios from '../../api/axios'
 import Table from '../../components/Table.vue'
+import { h } from 'vue';
 const users = ref({ data: [] })
 const formRef = ref(null)
 const formValue = ref({
-    first_name: "",
-    last_name: "",
-    middle_name: "",
-    phone: "",
-    email: "",
-    password: "",
-    nickname: "",
+    first_name: null,
+    last_name: null,
+    middle_name: null,
+    phone: null,
+    email: null,
+    password: null,
+    nickname: null,
     role: 1,
-    is_active: true
+    is_active: ref(true)
 })
 
 const details = reactive({
@@ -62,7 +64,7 @@ const details = reactive({
                     default: () => [
                         h(NButton, { onClick: () => show(row.id, 'update') }, { default: () => h(renderIcon(Pencil)) }),
                         h(NButton, { onClick: () => show(row.id, 'view') }, { default: () => h(renderIcon(EyeOutline)) }),
-                        h(NPopconfirm, {}, { trigger: () => h(NButton, null, { default: () => h(renderIcon(TrashOutline)) }), action: () => h(NButton, { size: 'small', secondary: true, type: 'error', onClick: () => destroy(row) }, { default: () => "Да" }), default: () => "Вы уверены, что хотите это удалить?" })
+                        h(NPopconfirm, { negativeText: null, positiveText: 'Да', onPositiveClick: () => destroy(row) }, { trigger: () => h(NButton, null, { default: () => h(renderIcon(TrashOutline)) }), default: () => "Вы уверены, что хотите это удалить?" })
                     ]
                 })
             }
@@ -94,6 +96,12 @@ const details = reactive({
             message: "Пожалуйста, введите почта",
             trigger: ["input", "blur"]
         },
+        role: {
+            required: true,
+            type: 'number',
+            message: "Пожалуйста, введите почта",
+            trigger: ["change", "blur"]
+        },
         password: {
             required: true,
             message: "Пожалуйста, введите пароль",
@@ -121,15 +129,15 @@ onMounted(async () => {
 const store = () => {
     formRef.value?.validate(async (errors) => {
         if (!errors) {
-            console.log(formValue.value);
-            // if (await axios.post('user/create', formValue.value)) {
-            //     getUsers()
-            //     details.showModal = false
-            // }
+            !formValue.value.is_active ? formValue.value.is_active = true : false
+            if (await axios.post('user/create', JSON.stringify(Object.assign({}, formValue.value)), { type: 'store' })) {
+                getUsers()
+                details.showModal = false
+            }
         } else {
-            console.log(errors);
+            console.log(errors)
         }
-    });
+    })
 }
 
 const show = async (id, type) => {
@@ -141,11 +149,23 @@ const show = async (id, type) => {
 }
 
 const update = async () => {
-
+    formRef.value?.validate(async (errors) => {
+        if (!errors) {
+            if (await axios.post('user/edit/' + formValue.value.id, JSON.stringify(Object.assign({}, formValue.value)), { type: 'update' })) {
+                getUsers()
+                details.showModal = false
+            }
+        } else {
+            console.log(errors)
+        }
+    })
 }
 
-const destroy = (row) => {
-    console.log(row);
+const destroy = async (row) => {
+    if (await axios.get('user/delete/' + row.id, { type: 'destroy' })) {
+        getUsers()
+        details.showModal = false
+    }
 }
 
 const pagination = (page) => {
@@ -159,7 +179,7 @@ const pageSize = (size) => {
 }
 </script>
 <template>
-    <div class="flex justify-between mb-3 bg-white rounded py-2 px-5">
+    <div class="flex justify-between mb-3 rounded py-2 px-5" :class="useTheme().isDark ? 'bg-zinc-900' : 'bg-white'">
         <div></div>
         <div>
             <n-button type="success" ghost @click="details.showModal = true; formValue = []">
@@ -178,6 +198,7 @@ const pageSize = (size) => {
         <template #header>
             <div class="text-center">
                 <n-tag v-if="!formValue.id" type="success">Создать новый</n-tag>
+                <n-tag v-else-if="details.type == 'view'" type="info">Просмотр</n-tag>
                 <n-tag v-else type="warning">Обновить</n-tag>
             </div>
         </template>
@@ -204,7 +225,11 @@ const pageSize = (size) => {
                     <n-form-item label="Эл. адрес" path="email" class="mx-4 w-60">
                         <n-input v-model:value="formValue.email" clearable placeholder="Введите Эл. адрес" />
                     </n-form-item>
-                    <n-form-item label="Пароль" path="password" class="w-56 mr-4">
+                    <n-form-item v-if="formValue.id ? false : true" label="Пароль" path="password" class="w-56 mr-4">
+                        <n-input type="password" show-password-on="mousedown" :maxlength="15"
+                            v-model:value="formValue.password" clearable placeholder="Введите Пароль" />
+                    </n-form-item>
+                    <n-form-item v-else label="Пароль" class="w-56 mr-4">
                         <n-input type="password" show-password-on="mousedown" :maxlength="15"
                             v-model:value="formValue.password" clearable placeholder="Введите Пароль" />
                     </n-form-item>
@@ -214,9 +239,8 @@ const pageSize = (size) => {
                     <n-form-item label="Telegram username" class="w-60">
                         <n-input v-model:value="formValue.nickname" clearable placeholder="Введите Telegram nickname" />
                     </n-form-item>
-                    <n-form-item label="Тип пользователя" class="mx-4 w-60">
-                        <n-select v-model:value="formValue.role" :default-value="1" clearable
-                            :options="details.roles" />
+                    <n-form-item label="Тип пользователя" path="role" class="mx-4 w-60">
+                        <n-select v-model:value="formValue.role" clearable :options="details.roles" />
                     </n-form-item>
                     <n-form-item label="Статус" class="w-60">
                         <n-switch v-model:value="formValue.is_active" :default-value="true">
@@ -230,9 +254,9 @@ const pageSize = (size) => {
                     </n-form-item>
                 </div>
 
-                <div class="flex justify-end">
+                <div v-if="details.type != 'view'" class="flex justify-end">
                     <n-button type="error" ghost class="mr-4" @click="details.showModal = false">Отменить</n-button>
-                    <n-button type="success" ghost @click="formValue.id ? update() : store()">{{ details.body.id ?
+                    <n-button type="success" ghost @click="formValue.id ? update() : store()">{{ formValue.id ?
                         'Обновлять' : 'Добавить' }}</n-button>
                 </div>
             </n-form>
