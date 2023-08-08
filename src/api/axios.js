@@ -39,7 +39,6 @@ const responseSuccess = (data) => {
 }
 
 const responseError = (data) => {
-    window.loadingBar.error()
     window.spin.setSpinVal(false)
     console.log(data.response);
     window.useMessage.error(data.response.data.message)

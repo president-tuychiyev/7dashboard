@@ -4,7 +4,6 @@ import { Pencil, EyeOutline, TrashOutline, Add } from '@vicons/ionicons5'
 import { useTheme } from '../../stores/theme'
 import axios from '../../api/axios'
 import Table from '../../components/Table.vue'
-import { h } from 'vue';
 const users = ref({ data: [] })
 const formRef = ref(null)
 const formValue = ref({
