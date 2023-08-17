@@ -41,7 +41,7 @@ const responseSuccess = (data) => {
 const responseError = (data) => {
     window.spin.setSpinVal(false)
     console.log(data.response);
-    window.useMessage.error(data.response.data.message)
+    window.useMessage.error(data.response.data.error.message)
     switch (data.response.status) {
         case 500:
             // window.location.href = '/cabinet/error'
@@ -49,7 +49,7 @@ const responseError = (data) => {
         case 401:
             $cookies.remove("token_user")
             localStorage.removeItem('user')
-            window.location.href = '/logout'
+            window.location.href = '/login'
             break
         case 466:
             break
@@ -61,10 +61,6 @@ const responseError = (data) => {
 
     return data.response
 }
-// axios.interceptors.response.use(function (response) {
-//     return response;
-// }, function (error) {
-//     return Promise.reject(error);
-// });
+
 
 export default axios

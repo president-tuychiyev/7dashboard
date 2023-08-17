@@ -4,7 +4,6 @@ import Table from '../../components/Table.vue'
 import { NButtonGroup, NButton, NPopconfirm } from 'naive-ui'
 import { Pencil, TrashOutline, Add } from '@vicons/ionicons5'
 import { useTheme } from '../../stores/theme'
-import { parseISO } from 'date-fns'
 import moment from 'moment'
 
 const promocodes = ref({ data: [] })
@@ -17,7 +16,7 @@ const formValue = ref({
     value: null,
     qty: null,
     status: true,
-    expire_at: null,
+    expire_date: new Date(),
     categories: []
 })
 
@@ -33,33 +32,42 @@ const details = reactive({
         {
             title: 'Название',
             width: '20vw',
-            key: 'title'
+            key: 'title',
+            sorter: 'default'
         },
         {
             title: 'Тип',
+            key: 'type',
             render: (row) => {
                 return row.type == 1 ? 'Процент' : 'Цена'
-            }
+            },
+            sorter: 'default'
         },
         {
             title: 'Значение',
+            key: 'value',
             render: (row) => {
                 return row.type == 1 ? row.value + '%' : currency(row.value)
-            }
+            },
+            sorter: 'default'
         },
         {
             title: 'Код',
-            key: 'promocode'
+            key: 'promocode',
+            sorter: 'default'
         },
         {
             title: 'Количество',
-            key: 'qty'
+            key: 'qty',
+            sorter: 'default'
         },
         {
             title: 'Окончание',
+            key: 'expire_at',
             render(row) {
                 return moment(row.expire_at).format("DD.MM.YYYY | HH:mm")
             },
+            sorter: 'default'
         },
         {
             title: 'Статус',
@@ -88,6 +96,7 @@ const details = reactive({
             trigger: ["input", "blur"]
         },
         type: {
+            type: "number",
             required: true,
             message: "Пожалуйста, введите код",
             trigger: ["blur", "change"]
@@ -107,7 +116,7 @@ const details = reactive({
             message: "Пожалуйста, введите количество",
             trigger: ["input", "blur"]
         },
-        expire_at: {
+        expire_date: {
             type: "number",
             required: true,
             message: "Пожалуйста, выберите дату",
@@ -145,12 +154,11 @@ const getPromocodes = onMounted(async () => {
 const store = () => {
     formRef.value?.validate(async (errors) => {
         if (!errors) {
-            formValue.value.expire_at = moment(formValue.value.expire_at).format('YYYY-MM-DDTHH:MM:SS')
-            console.log(formValue.value);
-            // if (await axios.post('promocode/create', JSON.stringify(Object.assign({}, formValue.value)), { type: 'store' })) {
-            //     getPromocodes()
-            //     details.showModal = false
-            // }
+            formValue.value.expire_at = new Date(formValue.value.expire_date)
+            if (await axios.post('promocode/create', JSON.stringify(Object.assign({}, formValue.value)), { type: 'store' })) {
+                getPromocodes()
+                details.showModal = false
+            }
         } else {
             console.log(errors)
         }
@@ -163,7 +171,7 @@ const show = async (id) => {
     data.qty = data.qty.toString()
     data.value = data.value.toString()
     data.status = data.status ? true : false
-    data.expire_at = Date.parse(data.expire_at)
+    data.expire_date = Date.parse(data.expire_at)
     data.categories = data.categories.map(item => {
         return item.id
     })
@@ -176,6 +184,7 @@ const show = async (id) => {
 const update = async () => {
     formRef.value?.validate(async (errors) => {
         if (!errors) {
+            !formValue.value.status ? formValue.value.status = 0 : formValue.value.status = 1
             if (await axios.post('promocode/edit/' + formValue.value.id, JSON.stringify(Object.assign({}, formValue.value)), { type: 'update' })) {
                 getPromocodes()
                 details.showModal = false
@@ -192,6 +201,12 @@ const destroy = async (row) => {
         details.showModal = false
     }
 }
+
+// const sort = (sorter) => {
+//     details.query.column = !sorter.order ? 'id' : sorter.columnKey
+//     sorter.order == 'descend' ? details.query.sort = 'desc' : details.query.sort = 'asc'
+//     getPromocodes()
+// }
 
 const pagination = (page) => {
     details.query.page = page
@@ -231,7 +246,7 @@ const pageSize = (size) => {
                     </n-form-item>
                     <n-form-item label="Тип" path="type" class="mx-4 w-60">
                         <n-select v-model:value="formValue.type"
-                            :options="[{ label: 'Процент', value: '1' }, { label: 'Цена', value: '2' }]" clearable
+                            :options="[{ label: 'Процент', value: 1 }, { label: 'Цена', value: 2 }]" clearable
                             placeholder="Выберите тип" />
                     </n-form-item>
                     <n-form-item label="Код" path="promocode" class="w-60">
@@ -246,9 +261,9 @@ const pageSize = (size) => {
                     <n-form-item label="Количество" path="qty" class="mx-4 w-60">
                         <n-input v-model:value="formValue.qty" clearable placeholder="Введите количество" />
                     </n-form-item>
-                    <n-form-item label="Истекает время" path="expire_at" class="w-60">
-                        <n-date-picker v-model:value="formValue.expire_at" :format="'dd-MM-yyyy'"
-                            :value-format="'dd-MM-yyyy'" clearable placeholder="Выберите дату" />
+                    <n-form-item label="Истекает время" path="expire_date" class="w-60">
+                        <n-date-picker v-model:value="formValue.expire_date" type="datetime" clearable
+                            placeholder="Выберите дату" />
                     </n-form-item>
                 </div>
 
