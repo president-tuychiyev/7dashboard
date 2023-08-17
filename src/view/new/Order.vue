@@ -29,7 +29,7 @@ const details = reactive({
         {
             title: 'Итоговая сумма',
             key: 'total_price',
-            render: (row) => new Intl.NumberFormat('en-US', { style: 'currency', currency: row.currency }).format(row.total_price),
+            render: (row) => currency(row.total_price, row.currency),
             filterMultiple: false,
             filterOptionValue: null,
             filterOptions: [
@@ -158,7 +158,7 @@ const details = reactive({
                 return h(NButtonGroup, null, {
                     default: () => [
                         h(NButton, null, { default: () => h(renderIcon(Pencil)) }),
-                        h(NButton, null, { default: () => h(renderIcon(EyeOutline)) }),
+                        h(NButton, null, { default: () => h(renderIcon(EyeOutline)) }),type
                         h(NDropdown, { filterable: true, options: details.actionOptions, trigger: 'click' }, { default: () => h(NButton, null, { default: () => h(renderIcon(Menu)) }) })
                     ]
                 })

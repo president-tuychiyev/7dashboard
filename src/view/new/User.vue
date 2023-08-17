@@ -178,15 +178,12 @@ const pageSize = (size) => {
 }
 </script>
 <template>
-    <div class="flex justify-between mb-3 rounded py-2 px-5" :class="useTheme().isDark ? 'bg-zinc-900' : 'bg-white'">
-        <div></div>
-        <div>
-            <n-button type="success" ghost @click="details.showModal = true; formValue = []">
-                <template #icon>
-                    <Add />
-                </template>
-            </n-button>
-        </div>
+    <div class="flex justify-end mb-3 rounded py-2 px-5" :class="useTheme().isDark ? 'bg-zinc-900' : 'bg-white'">
+        <n-button type="success" ghost @click="details.showModal = true; formValue = []">
+            <template #icon>
+                <Add />
+            </template>
+        </n-button>
     </div>
 
 

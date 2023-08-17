@@ -13,6 +13,10 @@ window.renderIcon = (icon) => {
     return () => h(NIcon, null, { default: () => h(icon) });
 }
 
+window.currency = (total, currency = 'uzs') => {
+    return new Intl.NumberFormat('uz-UZ', { style: 'currency', currency: currency }).format(total)
+}
+
 localStorage.getItem('breadcrumbs') === null ? localStorage.setItem('breadcrumbs', JSON.stringify(
     [{
         name: 'Home page',
