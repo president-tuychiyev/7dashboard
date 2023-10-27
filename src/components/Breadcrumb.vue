@@ -1,5 +1,5 @@
 <script setup>
-import { useBreadcrumb } from '../stores/Breadcrumb'
+import { useBreadcrumb } from '../stores/breadcrumb'
 import { useTheme } from '../stores/theme'
 
 </script>

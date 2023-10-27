@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useBreadcrumb } from '../stores/Breadcrumb'
+import { useBreadcrumb } from '../stores/breadcrumb'
 import { useMenu } from '../stores/menu'
 
 const AUTH_TOKEN = $cookies.get('AUTH_TOKEN') ?? null
