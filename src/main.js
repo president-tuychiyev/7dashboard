@@ -10,6 +10,10 @@ import App from './App.vue'
 import Navbar from './components/Navbar.vue'
 import Sidebar from './components/Sidebar.vue'
 
+// Fix Naive UI + Tailwind CSS issue
+const meta = document.createElement('meta')
+meta.name = 'naive-ui-style'
+document.head.appendChild(meta)
 
 const app = createApp(
     h(NLoadingBarProvider, () =>
