@@ -1,9 +1,10 @@
 <script setup>
-import { NButtonGroup, NButton, NDropdown } from 'naive-ui'
+import { NButtonGroup, NButton, NDropdown, NSelect } from 'naive-ui'
 import { Pencil, EyeOutline, Menu } from '@vicons/ionicons5'
 import moment from 'moment'
 import axios from '../../api/axios'
 import Table from '../../components/Table.vue'
+import { h } from 'vue'
 const orders = ref({ data: [] })
 const details = reactive({
     query: {
@@ -55,6 +56,7 @@ const details = reactive({
                     case 4: return 'CARD'
                     case 5: return 'VISA'
                     case 6: return 'MCARD'
+                    case 7: return 'PAYZE'
                 }
             },
             sorter: 'default',
@@ -66,23 +68,53 @@ const details = reactive({
                 { label: 'CLICK', value: '3' },
                 { label: 'CARD', value: '4' },
                 { label: 'VISA', value: '5' },
-                { label: 'MCARD', value: '6' }
+                { label: 'MCARD', value: '6' },
+                { label: 'PAYZE', value: '7' }
             ],
             filter: 'default'
         },
         {
             title: 'Статус заказа',
             key: 'state',
-            render(row) {
-                switch (row.state) {
-                    case 1: return '🆕 Новый'
-                    case 2: return '🕔 В обработке'
-                    case 3: return '🚚 В пути'
-                    case 4: return '✅ Выполнен'
-                    case -1: return '❌ Отмена'
-                    case -2: return '↩️ Возврат'
-                    case 5: return '💤 Завершен'
-                }
+            render: (row) => {
+                return h(NSelect, {
+                    defaultValue: row.state,
+                    onUpdateValue: async (val) => {
+                        if (await axios.put('order/' + row.id, { state: val }, { type: 'update' })) {
+                            getOrders()
+                        }
+                    },
+                    options: [
+                        {
+                            label: '🆕 Новый',
+                            value: 1
+                        },
+                        {
+                            label: '🕔 В обработке',
+                            value: 2
+                        },
+                        {
+                            label: '🚚 В пути',
+                            value: 3
+                        },
+                        {
+                            label: '✅ Выполнен',
+                            value: 4
+                        },
+                        {
+                            label: '❌ Отмена',
+                            value: -1
+                        },
+                        {
+                            label: '↩️ Возврат',
+                            value: -2
+                        },
+                        {
+                            label: '💤 Завершен',
+                            value: 5
+                        }
+                    ]
+                })
             },
             sorter: 'default',
             filterMultiple: false,
@@ -122,12 +154,6 @@ const details = reactive({
         {
             title: 'Статус оплаты',
             key: 'payment_state',
-            render(row) {
-                switch (row.payment_state) {
-                    case 1: return h('span', { class: 'font-bold text-green-600' }, '✅ Оплачен')
-                    case 0: return h('span', { class: 'text-red-600' }, '⚠️ Не оплачен')
-                }
-            },
             sorter: 'default',
             filterMultiple: false,
             filterOptionValue: null,
@@ -141,7 +167,27 @@ const details = reactive({
                     value: '0'
                 }
             ],
-            filter: 'default'
+            filter: 'default',
+            render: (row) => {
+                return h(NSelect, {
+                    value: row.payment_state,
+                    onUpdateValue: async (val) => {
+                        if (await axios.post('order/payment/' + row.id, { payment_state: val }, { type: 'update' })) {
+                            getOrders()
+                        }
+                    },
+                    options: [
+                        {
+                            label: () => h('span', { class: 'font-bold text-green-600' }, '✅ Оплачен'),
+                            value: 1
+                        },
+                        {
+                            label: () => h('span', { class: 'text-red-600' }, '⚠️ Не оплачен'),
+                            value: 0
+                        }
+                    ]
+                })
+            }
         },
         {
             title: 'Дата',
@@ -158,63 +204,10 @@ const details = reactive({
                 return h(NButtonGroup, null, {
                     default: () => [
                         h(NButton, null, { default: () => h(renderIcon(Pencil)) }),
-                        h(NButton, null, { default: () => h(renderIcon(EyeOutline)) }),
-                        h(NDropdown, { filterable: true, options: details.actionOptions, trigger: 'click' }, { default: () => h(NButton, null, { default: () => h(renderIcon(Menu)) }) })
+                        h(NButton, null, { default: () => h(renderIcon(EyeOutline)) })
                     ]
                 })
             }
-        }
-    ],
-    actionOptions: [
-        {
-            type: "group",
-            label: "Статус заказа",
-            key: "state",
-            children: [
-                {
-                    label: 'Новый',
-                    value: '1'
-                },
-                {
-                    label: 'В обработке',
-                    value: '2'
-                },
-                {
-                    label: 'В пути',
-                    value: '3'
-                },
-                {
-                    label: 'Выполнен',
-                    value: '4'
-                },
-                {
-                    label: 'Отмена',
-                    value: '-1'
-                },
-                {
-                    label: 'Возврат',
-                    value: '-2'
-                },
-                {
-                    label: 'Завершен',
-                    value: '5'
-                }
-            ]
-        },
-        {
-            type: "group",
-            label: "Статус оплаты",
-            key: "payment_state",
-            children: [
-                {
-                    label: 'Оплачен',
-                    value: '1'
-                },
-                {
-                    label: 'Не оплачен',
-                    value: '0'
-                }
-            ]
         }
     ]
 })

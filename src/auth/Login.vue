@@ -5,6 +5,7 @@ import Logo from '../components/icon/Logo.vue'
 import axios from '../api/axios'
 
 const details = reactive({
+    loading: false,
     login: {
         isEmpty: false,
         value: null
@@ -25,21 +26,24 @@ const signIn = async () => {
         details.password.isEmpty = true
         return
     }
+    details.loading = true
 
-    details.body = (await axios.post('login', { login: details.login.value, password: details.password.value })).data.data
-    localStorage.setItem('user', JSON.stringify({
-        id: details.body.id,
-        email: details.body.email,
-        firstName: details.body.first_name ?? 'admin',
-        lastName: details.body.last_name ?? 'admin',
-        middleName: details.body.middle_name ?? 'admin',
-        permissons: details.body.permissons,
-        permissons: details.body.permissons,
-        role: details.body.role
-    }))
-    $cookies.set('AUTH_TOKEN', details.body.token?.body, details.body.token?.expired_at)
-    // router.push({ name: 'cabinet.home' })
-    window.location.href = window.location.href
+    details.body = (await axios.post('login', { login: details.login.value, password: details.password.value })).data
+    if (details.body && !details.body.error && details.body.data) {
+        localStorage.setItem('user', JSON.stringify({
+            id: details.body.data.id,
+            email: details.body.data.email,
+            firstName: details.body.data.first_name ?? 'admin',
+            lastName: details.body.data.last_name ?? 'admin',
+            middleName: details.body.data.middle_name ?? 'admin',
+            permissons: details.body.data.permissons,
+            permissons: details.body.data.permissons,
+            role: details.body.data.role
+        }))
+        $cookies.set('AUTH_TOKEN', details.body.data.token?.body, details.body.data.token?.expired_at)
+        window.location.href = window.location.href
+    }
+    details.loading = false
 }
 
 </script>
@@ -83,15 +87,16 @@ const signIn = async () => {
                             </div>
 
                             <input type="password" v-model="details.password.value" placeholder="Введите пароль"
+                                @keyup.enter="signIn"
                                 class="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border rounded-md dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 focus:border-teal-500 dark:focus:border-teal-500 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"
                                 :class="details.password.isEmpty ? 'border-red-200 dark:border-red-700 ' : 'border-gray-200 dark:border-gray-700'" />
                         </div>
 
                         <div class="mt-6">
-                            <button @click="signIn"
-                                class="w-full px-4 py-2 tracking-wide text-white transition-colors duration-200 transform bg-teal-500 rounded-md hover:bg-teal-400 focus:outline-none focus:bg-teal-400 focus:ring focus:ring-blue-300 focus:ring-opacity-50">
+                            <n-button :loading="details.loading" :disabled="details.loading" @click="signIn"
+                                class="disabled:cursor-default w-full px-4 py-2 tracking-wide text-white transition-colors duration-200 transform rounded-md focus:outline-none focus:ring-opacity-50">
                                 Авторизоваться
-                            </button>
+                            </n-button>
                         </div>
 
                         <div class="mt-6 text-sm flex justify-center text-gray-400">

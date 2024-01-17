@@ -1,6 +1,5 @@
 <script setup>
 import { AlbumsOutline, PersonOutline, LogOutOutline, MoonOutline, SunnyOutline } from '@vicons/ionicons5'
-import router from '../router'
 import { useBreadcrumb } from '../stores/breadcrumb'
 import { useTheme } from '../stores/theme'
 

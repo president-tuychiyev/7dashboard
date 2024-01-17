@@ -34,7 +34,7 @@ const router = createRouter({
                     path: '/cabinet/new/orders',
                     name: 'cabinet.new.order',
                     component: () => import('../view/new/Order.vue'),
-                    meta: { title: 'Oders page' }
+                    meta: { title: 'Orders page' }
                 },
                 {
                     path: '/cabinet/new/promocodes',
