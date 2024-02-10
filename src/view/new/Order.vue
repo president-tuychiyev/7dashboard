@@ -1,6 +1,6 @@
 <script setup>
 import { NButtonGroup, NButton, NSelect } from 'naive-ui'
-import { Pencil, EyeOutline, TrashOutline, SaveOutline } from '@vicons/ionicons5'
+import { Pencil, EyeOutline, TrashOutline, SaveOutline, Refresh, DownloadOutline } from '@vicons/ionicons5'
 import moment from 'moment'
 import axios from '../../api/axios'
 import Table from '../../components/Table.vue'
@@ -247,12 +247,7 @@ const details = reactive({
             title: 'Действия',
             align: 'center',
             render: (row) => {
-                return h(NButtonGroup, null, {
-                    default: () => [
-                        h(NButton, null, { default: () => h(renderIcon(Pencil)) }),
-                        h(NButton, { onClick: () => show(row) }, { default: () => h(renderIcon(EyeOutline)) })
-                    ]
-                })
+                return h(NButton, { onClick: () => show(row) }, { default: () => h(renderIcon(EyeOutline)) })
             }
         }
     ]
@@ -357,7 +352,6 @@ const status = (code) => {
 }
 
 const update = async () => {
-    console.log(details.body);
     details.body.details_info = details.body.details_info.map(item => {
         return {
             amount: item.amount,
@@ -370,7 +364,7 @@ const update = async () => {
 
     if (await axios.post('order/edit/' + details.body.id, details.body)) {
         window.useMessage.success("Успешно обновлено")
-        details.showModal = false
+        show(details.body)
     } else {
         window.useMessage.error("Произошла ошибка при обновлении")
     }
@@ -399,12 +393,22 @@ const setAmount = (amount, product) => {
         return item
     })
 }
+
+const report = async () => {
+    const data = await axios.get('order/create/report/' + details.body.id + '?token=21232f297a57a5a743894a0e4a801fc3', { responseType: 'blob' })
+    const blob = new Blob([data.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,',
+    });
+    const url = window.URL.createObjectURL(blob);
+    window.location.assign(url);
+}
 </script>
 <template>
     <Table :data="orders.data" :column="details.columns" :filters="filter" :sort="sort" :pagination="pagination"
         :pageSize="pageSize" />
 
-    <n-modal v-model:show="details.showModal" :mask-closable="false" :close-on-esc="false" preset="card" class="!w-1/2">
+    <n-modal v-model:show="details.showModal" :mask-closable="false" :close-on-esc="false" preset="card"
+        class="!w-1/1 min-h-screen h-full">
         <n-card :bordered="false" size="huge" aria-modal="true">
             <n-tabs default-value="details" type="line" animated>
                 <n-tab-pane name="details" tab="Детали заказа">
@@ -619,13 +623,30 @@ const setAmount = (amount, product) => {
                     </n-scrollbar>
                 </n-tab-pane>
 
-                <n-tab-pane name="performers" tab=" Исполнители ">
+                <n-tab-pane name="performers" tab="Исполнители">
+
                 </n-tab-pane>
             </n-tabs>
 
             <div class="flex justify-center mt-10 gap-4">
-                <n-button @click="refresh" type="info"> Сбросить </n-button>
-                <n-button @click="update" type="success"> Сохранить </n-button>
+                <n-button @click="show(details.body)" type="info">
+                    <template #icon>
+                        <Refresh />
+                    </template>
+                    Сбросить
+                </n-button>
+                <n-button @click="update" type="success">
+                    <template #icon>
+                        <SaveOutline />
+                    </template>
+                    Сохранить
+                </n-button>
+                <n-button @click="report" type="warning">
+                    <template #icon>
+                        <DownloadOutline />
+                    </template>
+                    Отчет по заказам(xlsx)
+                </n-button>
             </div>
 
         </n-card>
