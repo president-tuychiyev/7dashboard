@@ -1,6 +1,6 @@
 <script setup>
 import { NButtonGroup, NButton, NPopconfirm } from 'naive-ui'
-import { Pencil, EyeOutline, TrashOutline, Add } from '@vicons/ionicons5'
+import { Pencil, EyeOutline, TrashOutline, Add, Search } from '@vicons/ionicons5'
 import { useTheme } from '../../stores/theme'
 import axios from '../../api/axios'
 import Table from '../../components/Table.vue'
@@ -25,7 +25,10 @@ const details = reactive({
         page: 1,
         column: 'id',
         sort: 'desc',
-        limit: 15
+        limit: 15,
+        fio: '',
+        role: '',
+        is_active: ''
     },
     columns: [
         {
@@ -178,7 +181,34 @@ const pageSize = (size) => {
 }
 </script>
 <template>
-    <div class="flex justify-end mb-3 rounded py-2 px-5" :class="useTheme().isDark ? 'bg-zinc-900' : 'bg-white'">
+    <div class="flex justify-between items-center gap-4 mb-3 rounded py-2 px-5"
+        :class="useTheme().isDark ? 'bg-zinc-900' : 'bg-white'">
+
+        <div class="flex gap-4 items-end">
+            <div class="w-full">
+                Поиск
+                <n-input v-model:value="details.query.fio" clearable placeholder="Поиск по ФИО" @keyup.enter="getUsers" />
+            </div>
+            <div class="w-full">
+                Роль пользователя
+                <n-select v-model:value="details.query.role" :options="details.roles" @update:value="getUsers" clearable
+                    placeholder="Выберите" />
+            </div>
+            <div class="w-full">
+                Статус
+                <n-select v-model:value="details.query.is_active"
+                    :options="[{ label: 'Активен', value: 1 }, { label: 'Неактивен', value: 0 }]" @update:value="getUsers"
+                    clearable placeholder="Выберите" />
+            </div>
+
+            <n-button @click="getUsers">
+                <template #icon>
+                    <Search />
+                </template>
+            </n-button>
+        </div>
+
+
         <n-button type="success" ghost @click="details.showModal = true; formValue = []">
             <template #icon>
                 <Add />
@@ -250,7 +280,7 @@ const pageSize = (size) => {
                     </n-form-item>
                 </div>
 
-                <div v-if="details.type != 'view'" class="flex justify-end">
+                <div v-if="details.type != 'view'" class="flex justify-end gap-4">
                     <n-button type="error" ghost class="mr-4" @click="details.showModal = false">Отменить</n-button>
                     <n-button type="success" ghost @click="formValue.id ? update() : store()">{{ formValue.id ?
                         'Обновлять' : 'Добавить' }}</n-button>

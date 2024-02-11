@@ -93,8 +93,7 @@ const signIn = async () => {
                         </div>
 
                         <div class="mt-6">
-                            <n-button :loading="details.loading" :disabled="details.loading" @click="signIn"
-                                class="disabled:cursor-default w-full px-4 py-2 tracking-wide text-white transition-colors duration-200 transform rounded-md focus:outline-none focus:ring-opacity-50">
+                            <n-button :loading="details.loading" :disabled="details.loading" @click="signIn">
                                 Авторизоваться
                             </n-button>
                         </div>
