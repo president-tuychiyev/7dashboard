@@ -4,11 +4,43 @@ import { Pencil, EyeOutline, TrashOutline, SaveOutline, Refresh, DownloadOutline
 import moment from 'moment'
 import axios from '../../api/axios'
 import Table from '../../components/Table.vue'
+import { useSpinStore } from '../../stores/spin'
+
 const orders = ref({ data: [] })
 const details = reactive({
     showModal: false,
     isUpdate: false,
     body: {},
+    orderStatus: [
+        {
+            label: '🆕 Новый',
+            value: 1
+        },
+        {
+            label: '🕔 В обработке',
+            value: 2
+        },
+        {
+            label: '🚚 В пути',
+            value: 3
+        },
+        {
+            label: '✅ Выполнен',
+            value: 4
+        },
+        {
+            label: '❌ Отмена',
+            value: -1
+        },
+        {
+            label: '↩️ Возврат',
+            value: -2
+        },
+        {
+            label: '💤 Завершен',
+            value: 5
+        }
+    ],
     paymentMethods: [
         {
             label: 'Наличные',
@@ -125,11 +157,7 @@ const details = reactive({
             render: (row) => {
                 return h(NSelect, {
                     defaultValue: row.state,
-                    onUpdateValue: async (val) => {
-                        if (await axios.put('order/' + row.id, { state: val }, { type: 'update' })) {
-                            getOrders()
-                        }
-                    },
+                    onUpdateValue: (val) => updateState(val, row.id),
                     options: [
                         {
                             label: '🆕 Новый',
@@ -217,11 +245,7 @@ const details = reactive({
             render: (row) => {
                 return h(NSelect, {
                     value: row.payment_state,
-                    onUpdateValue: async (val) => {
-                        if (await axios.post('order/payment/' + row.id, { payment_state: val }, { type: 'update' })) {
-                            getOrders()
-                        }
-                    },
+                    onUpdateValue: (val) => updatePaymentState(val, row.id),
                     options: [
                         {
                             label: () => h('span', { class: 'font-bold text-green-600' }, '✅ Оплачен'),
@@ -296,6 +320,8 @@ const show = async (row) => {
         item.discount = item.discount.toString()
         return item;
     })
+
+    getUser()
 
     details.showModal = true
 }
@@ -402,6 +428,24 @@ const report = async () => {
     const url = window.URL.createObjectURL(blob);
     window.location.assign(url);
 }
+
+const updateState = async (val, id) => {
+    if (await axios.put('order/' + id, { state: val }, { type: 'update' })) {
+        getOrders()
+    }
+}
+
+const updatePaymentState = async (val, id) => {
+    if (await axios.post('order/payment/' + id, { payment_state: val }, { type: 'update' })) {
+        getOrders()
+    }
+}
+
+const getUser = async () => {
+    details.admins = (await axios.get(`user?all=true&role=4&is_active=1`)).data;
+    details.managers = (await axios.get(`user?all=true&role=5&is_active=1`)).data;
+    details.deliverymans = (await axios.get(`user?all=true&role=6&is_active=1`)).data;
+}
 </script>
 <template>
     <Table :data="orders.data" :column="details.columns" :filters="filter" :sort="sort" :pagination="pagination"
@@ -409,246 +453,284 @@ const report = async () => {
 
     <n-modal v-model:show="details.showModal" :mask-closable="false" :close-on-esc="false" preset="card"
         class="!w-1/1 min-h-screen h-full">
-        <n-card :bordered="false" size="huge" aria-modal="true">
-            <n-tabs default-value="details" type="line" animated>
-                <n-tab-pane name="details" tab="Детали заказа">
-                    <div class="grid grid-cols-3 gap-6">
-                        <label>
-                            <span class="font-bold">Источник</span>
-                            <n-input :value="devices(details.body.source)" disabled type="text" />
-                        </label>
-                        <label>
-                            <span class="font-bold">Заказчик</span>
-                            <n-input :value="details.body.user.first_name" disabled type="text" />
-                        </label>
-                        <label>
-                            <span class="font-bold">Пол</span>
-                            <n-input :value="gender(details.body.user.sex)" disabled type="text" />
-                        </label>
 
-                        <label>
-                            <span class="font-bold">Статус</span>
-                            <n-input :value="status(details.body.state)" disabled type="text" />
-                        </label>
-                        <label>
-                            <span class="font-bold">Телефон</span>
-                            <n-input :value="details.body.user.phone" disabled type="text" />
-                        </label>
-                        <label>
-                            <span class="font-bold">Время доставки</span>
-                            <n-select v-model:value="details.body.delivery_time" :options="details.delevryTime" disabled />
-                        </label>
-
-                        <label>
-                            <span class="font-bold">Метод оплаты</span>
-                            <n-select v-model:value="details.body.payment_method" :options="details.paymentMethods"
-                                disabled />
-                        </label>
-                        <label>
-                            <span class="font-bold">Статус оплаты</span>
-                            <n-input :value="details.body.payment_state == 1 ? 'Оплачен' : 'Не оплачен'" disabled
-                                type="text" />
-                        </label>
-                        <label>
-                            <span class="font-bold">Название промокода</span>
-                            <n-input :value="details.body.promocode ?? 'Промокод не использован'" disabled type="text" />
-                        </label>
-
-                        <label>
-                            <span class="font-bold">Тип промокода</span>
-                            <n-input
-                                :value="details.body.promocode ? details.promocode.type == 1 ? 'процент' : 'сумму' : 'Промокод не использован'"
-                                disabled type="text" />
-                        </label>
-                        <label>
-                            <span class="font-bold">Окончание промокода</span>
-                            <n-input
-                                :value="details.body.promocode ? moment(details.body.promocode.expire_at).format('DD.MM.YYYY | HH:mm') : 'Промокод не использован'"
-                                disabled type=" text" />
-                        </label>
-                        <label>
-                            <span class="font-bold">Скидка промокода</span>
-                            <n-input
-                                :value="details.body.promocode ? details.body.promocode.discount.toString() : 'Промокод не использован'"
-                                disabled type=" text" />
-                        </label>
-
-                        <label>
-                            <span class="font-bold">Сумма товаров</span>
-                            <n-input :value="details.body.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')" disabled
-                                type="text" />
-                        </label>
-                        <label>
-                            <span class="font-bold">Сумма скидка</span>
-                            <n-input :value="details.body.discount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')"
-                                disabled type="text" />
-                        </label>
-                        <label>
-                            <span class="font-bold">Сумма доставки</span>
-                            <n-input :value="details.body.delivery_price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')"
-                                disabled type="text" />
-                        </label>
-
-                        <label>
-                            <span class="font-bold">Итоговая цена</span>
-                            <n-input :value="details.body.total_price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')"
-                                disabled type="text" />
-                        </label>
-                        <label>
-                            <span class="font-bold">Валюта</span>
-                            <n-input :value="details.body.currency" disabled type="text" />
-                        </label>
-                        <label>
-                            <span class="font-bold">Почтовый индекс</span>
-                            <n-input :value="details.body.zip_code" disabled type="text" />
-                        </label>
-
-                        <label>
-                            <span class="font-bold">Страна</span>
-                            <n-input :value="details.body.country.name" disabled type="text" />
-                        </label>
-                        <label>
-                            <span class="font-bold">Регион</span>
-                            <n-input :value="details.body.region.name" disabled type="text" />
-                        </label>
-                        <label>
-                            <span class="font-bold">Город</span>
-                            <n-input :value="details.body.city" disabled type="text" />
-                        </label>
-
-                        <label>
-                            <span class="font-bold">Улица</span>
-                            <n-input :value="details.body.address.split(',')[1]" disabled type="text" />
-                        </label>
-                        <label>
-                            <span class="font-bold">Дом</span>
-                            <n-input :value="details.body.house" disabled type="text" />
-                        </label>
-                        <label>
-                            <span class="font-bold">Адрес доставки</span>
-                            <n-input :value="details.body.address" readonly type="text" />
-                        </label>
-                    </div>
-                </n-tab-pane>
-
-                <n-tab-pane name="list" tab="Список товаров">
-                    <n-scrollbar x-scrollable>
-                        <n-table :single-line="false" striped>
-                            <thead>
-                                <tr>
-                                    <th>Изображения</th>
-                                    <th>Наименование</th>
-                                    <th>Barcode</th>
-                                    <th>Артикуль</th>
-                                    <th>Цвет</th>
-                                    <th>Размер</th>
-                                    <th>Количество</th>
-                                    <th class="!min-w-[150px]">
-                                        <p class="text-center">
-                                            Сумма
-                                        </p>
-                                    </th>
-                                    <th class="!min-w-[150px]">
-                                        <p class="text-center">Скидка</p>
-                                    </th>
-                                    <th class="!min-w-[150px]">
-                                        <p class="text-center">Общая сумма</p>
-                                    </th>
-                                    <th>Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="item in  details.body.details_info" v-show="!item.is_delete">
-                                    <td>
-                                        <n-image width="100" :src="item.product?.images[0].path" />
-                                    </td>
-                                    <td>{{ item.product?.name }}</td>
-                                    <td>
-                                        <div class="whitespace-nowrap">{{ item.product?.barcode }}</div>
-                                    </td>
-                                    <td>
-                                        <div class="whitespace-nowrap">{{ item.product?.sku }}</div>
-                                    </td>
-                                    <td class="grid justify-center">
-                                        <div class="whitespace-nowrap">
-                                            <div class="h-8 w-8 rounded-full border"
-                                                :style="`background-color: ` + item.product?.color.hex_code[0]">
-                                            </div>
-                                            {{ item.product?.color.name }}
-                                        </div>
-                                    </td>
-                                    <td class="text-center">{{ item.product?.size }}</td>
-                                    <td class="text-center">
-                                        <n-input v-if="details.isUpdate" v-model:value="item.amount"
-                                            @update:value="setAmount(item.amount, item.product)" type="text" />
-                                        <span v-else>{{ item.amount }}</span>
-                                    </td>
-                                    <td class="text-center">
-                                        <n-input v-if="details.isUpdate" v-model:value="item.price" type="text" />
-                                        <span v-else>
-                                            {{ item.price?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        <n-input v-if="details.isUpdate" v-model:value="item.discount" type="text" />
-                                        <span v-else>
-                                            {{ item.discount?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        {{ item.total_product_price?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}
-                                    </td>
-                                    <td>
-                                        <n-button-group>
-                                            <n-button v-if="!details.isUpdate" @click="details.isUpdate = true" round>
-                                                <template #icon>
-                                                    <Pencil />
-                                                </template>
-                                            </n-button>
-                                            <n-button v-if="details.isUpdate" @click="details.isUpdate = false" round>
-                                                <template #icon>
-                                                    <SaveOutline />
-                                                </template>
-                                            </n-button>
-                                            <n-button @click="deleteProduct(item.product)" round>
-                                                <template #icon>
-                                                    <TrashOutline />
-                                                </template>
-                                            </n-button>
-                                        </n-button-group>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </n-table>
-                    </n-scrollbar>
-                </n-tab-pane>
-
-                <n-tab-pane name="performers" tab="Исполнители">
-
-                </n-tab-pane>
-            </n-tabs>
-
-            <div class="flex justify-center mt-10 gap-4">
-                <n-button @click="show(details.body)" type="info">
-                    <template #icon>
-                        <Refresh />
-                    </template>
-                    Сбросить
-                </n-button>
-                <n-button @click="update" type="success">
-                    <template #icon>
-                        <SaveOutline />
-                    </template>
-                    Сохранить
-                </n-button>
-                <n-button @click="report" type="warning">
-                    <template #icon>
-                        <DownloadOutline />
-                    </template>
-                    Отчет по заказам(xlsx)
-                </n-button>
+        <template #header-extra>
+            <div class="gap-4 flex">
+                <n-select :default-value="details.body.payment_state" :loading="useSpinStore().spin"
+                    :disabled="useSpinStore().spin"
+                    :options="[{ label: () => '✅ Оплачен', value: 1 }, { label: '⚠️ Не оплачен', value: 0 }]"
+                    class="!min-w-[150px]" @update:value="(val) => { updatePaymentState(val, details.body.id) }" />
+                <n-select :default-value="details.body.state" :options="details.orderStatus" class="!min-w-[150px]"
+                    :loading="useSpinStore().spin" :disabled="useSpinStore().spin"
+                    @update:value="(val) => { updateState(val, details.body.id) }" />
             </div>
+        </template>
+        <n-spin :show="useSpinStore().spin">
+            <n-card :bordered="false" size="huge" aria-modal="true">
+                <n-tabs default-value="details" type="line" animated>
+                    <n-tab-pane name="details" tab="Детали заказа">
+                        <div class="grid grid-cols-3 gap-6">
+                            <label>
+                                <span class="font-bold">Источник</span>
+                                <n-input :value="devices(details.body.source)" disabled type="text" />
+                            </label>
+                            <label>
+                                <span class="font-bold">Заказчик</span>
+                                <n-input :value="details.body.user.first_name" disabled type="text" />
+                            </label>
+                            <label>
+                                <span class="font-bold">Пол</span>
+                                <n-input :value="gender(details.body.user.sex)" disabled type="text" />
+                            </label>
 
-        </n-card>
+                            <label>
+                                <span class="font-bold">Статус</span>
+                                <n-input :value="status(details.body.state)" disabled type="text" />
+                            </label>
+                            <label>
+                                <span class="font-bold">Телефон</span>
+                                <n-input :value="details.body.user.phone" disabled type="text" />
+                            </label>
+                            <label>
+                                <span class="font-bold">Время доставки</span>
+                                <n-select v-model:value="details.body.delivery_time" :options="details.delevryTime"
+                                    disabled />
+                            </label>
+
+                            <label>
+                                <span class="font-bold">Метод оплаты</span>
+                                <n-select v-model:value="details.body.payment_method" :options="details.paymentMethods"
+                                    disabled />
+                            </label>
+                            <label>
+                                <span class="font-bold">Статус оплаты</span>
+                                <n-input :value="details.body.payment_state == 1 ? 'Оплачен' : 'Не оплачен'" disabled
+                                    type="text" />
+                            </label>
+                            <label>
+                                <span class="font-bold">Название промокода</span>
+                                <n-input :value="details.body.promocode ?? 'Промокод не использован'" disabled
+                                    type="text" />
+                            </label>
+
+                            <label>
+                                <span class="font-bold">Тип промокода</span>
+                                <n-input
+                                    :value="details.body.promocode ? details.promocode.type == 1 ? 'процент' : 'сумму' : 'Промокод не использован'"
+                                    disabled type="text" />
+                            </label>
+                            <label>
+                                <span class="font-bold">Окончание промокода</span>
+                                <n-input
+                                    :value="details.body.promocode ? moment(details.body.promocode.expire_at).format('DD.MM.YYYY | HH:mm') : 'Промокод не использован'"
+                                    disabled type=" text" />
+                            </label>
+                            <label>
+                                <span class="font-bold">Скидка промокода</span>
+                                <n-input
+                                    :value="details.body.promocode ? details.body.promocode.discount.toString() : 'Промокод не использован'"
+                                    disabled type=" text" />
+                            </label>
+
+                            <label>
+                                <span class="font-bold">Сумма товаров</span>
+                                <n-input :value="details.body.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')"
+                                    disabled type="text" />
+                            </label>
+                            <label>
+                                <span class="font-bold">Сумма скидка</span>
+                                <n-input :value="details.body.discount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')"
+                                    disabled type="text" />
+                            </label>
+                            <label>
+                                <span class="font-bold">Сумма доставки</span>
+                                <n-input
+                                    :value="details.body.delivery_price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')"
+                                    disabled type="text" />
+                            </label>
+
+                            <label>
+                                <span class="font-bold">Итоговая цена</span>
+                                <n-input :value="details.body.total_price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')"
+                                    disabled type="text" />
+                            </label>
+                            <label>
+                                <span class="font-bold">Валюта</span>
+                                <n-input :value="details.body.currency" disabled type="text" />
+                            </label>
+                            <label>
+                                <span class="font-bold">Почтовый индекс</span>
+                                <n-input :value="details.body.zip_code" disabled type="text" />
+                            </label>
+
+                            <label>
+                                <span class="font-bold">Страна</span>
+                                <n-input :value="details.body.country.name" disabled type="text" />
+                            </label>
+                            <label>
+                                <span class="font-bold">Регион</span>
+                                <n-input :value="details.body.region.name" disabled type="text" />
+                            </label>
+                            <label>
+                                <span class="font-bold">Город</span>
+                                <n-input :value="details.body.city" disabled type="text" />
+                            </label>
+
+                            <label>
+                                <span class="font-bold">Улица</span>
+                                <n-input :value="details.body.address.split(',')[1]" disabled type="text" />
+                            </label>
+                            <label>
+                                <span class="font-bold">Дом</span>
+                                <n-input :value="details.body.house" disabled type="text" />
+                            </label>
+                            <label>
+                                <span class="font-bold">Адрес доставки</span>
+                                <n-input :value="details.body.address" readonly type="text" />
+                            </label>
+                        </div>
+                    </n-tab-pane>
+
+                    <n-tab-pane name="list" tab="Список товаров">
+                        <n-scrollbar x-scrollable>
+                            <n-table :single-line="false" striped>
+                                <thead>
+                                    <tr>
+                                        <th>Изображения</th>
+                                        <th>Наименование</th>
+                                        <th>Barcode</th>
+                                        <th>Артикуль</th>
+                                        <th>Цвет</th>
+                                        <th>Размер</th>
+                                        <th>Количество</th>
+                                        <th class="!min-w-[150px]">
+                                            <p class="text-center">
+                                                Сумма
+                                            </p>
+                                        </th>
+                                        <th class="!min-w-[150px]">
+                                            <p class="text-center">Скидка</p>
+                                        </th>
+                                        <th class="!min-w-[150px]">
+                                            <p class="text-center">Общая сумма</p>
+                                        </th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="  item   in    details.body.details_info  " v-show="!item.is_delete">
+                                        <td>
+                                            <n-image width="100" :src="item.product?.images[0].path" />
+                                        </td>
+                                        <td>{{ item.product?.name }}</td>
+                                        <td>
+                                            <div class="whitespace-nowrap">{{ item.product?.barcode }}</div>
+                                        </td>
+                                        <td>
+                                            <div class="whitespace-nowrap">{{ item.product?.sku }}</div>
+                                        </td>
+                                        <td class="grid justify-center">
+                                            <div class="whitespace-nowrap">
+                                                <div class="h-8 w-8 rounded-full border"
+                                                    :style="`background-color: ` + item.product?.color.hex_code[0]">
+                                                </div>
+                                                {{ item.product?.color.name }}
+                                            </div>
+                                        </td>
+                                        <td class="text-center">{{ item.product?.size }}</td>
+                                        <td class="text-center">
+                                            <n-input v-if="details.isUpdate" v-model:value="item.amount"
+                                                @update:value="setAmount(item.amount, item.product)" type="text" />
+                                            <span v-else>{{ item.amount }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <n-input v-if="details.isUpdate" v-model:value="item.price" type="text" />
+                                            <span v-else>
+                                                {{ item.price?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <n-input v-if="details.isUpdate" v-model:value="item.discount" type="text" />
+                                            <span v-else>
+                                                {{ item.discount?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            {{ item.total_product_price?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}
+                                        </td>
+                                        <td>
+                                            <n-button-group>
+                                                <n-button v-if="!details.isUpdate" @click="details.isUpdate = true" round>
+                                                    <template #icon>
+                                                        <Pencil />
+                                                    </template>
+                                                </n-button>
+                                                <n-button v-if="details.isUpdate" @click="details.isUpdate = false" round>
+                                                    <template #icon>
+                                                        <SaveOutline />
+                                                    </template>
+                                                </n-button>
+                                                <n-button @click="deleteProduct(item.product)" round>
+                                                    <template #icon>
+                                                        <TrashOutline />
+                                                    </template>
+                                                </n-button>
+                                            </n-button-group>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </n-table>
+                        </n-scrollbar>
+                    </n-tab-pane>
+
+                    <n-tab-pane name="performers" tab="Исполнители">
+                        <div class="flex gap-10">
+                            <div class="w-full">
+                                Менеджер
+                                <n-select v-model:value="details.body.manager_id"
+                                    :options="details.managers.data.data.map(item => { return { label: `${item.first_name} ${item.last_name} ${item.middle_name}`, value: item.id } })" />
+                            </div>
+                            <div class="w-full">
+                                Складчик
+                                <n-select v-model:value="details.body.storeman_id"
+                                    :options="details.deliverymans.data.data.map(item => { return { label: `${item.first_name} ${item.last_name} ${item.middle_name}`, value: item.id } })" />
+                            </div>
+                            <div class="w-full">
+                                Доставщик
+                                <n-select v-model:value="details.body.deliveryman_id"
+                                    :options="details.admins.data.data.map(item => { return { label: `${item.first_name} ${item.last_name} ${item.middle_name}`, value: item.id } })" />
+                            </div>
+                        </div>
+
+                        <div class="w-full mt-8">
+                            Примечание
+                            <n-input v-model:value="details.body.comments" type="textarea" />
+                        </div>
+                    </n-tab-pane>
+                </n-tabs>
+
+                <div class="flex justify-center mt-10 gap-4">
+                    <n-button @click="report" type="warning">
+                        <template #icon>
+                            <DownloadOutline />
+                        </template>
+                        Отчет по заказам(xlsx)
+                    </n-button>
+                    <n-button @click="show(details.body)" type="info">
+                        <template #icon>
+                            <Refresh />
+                        </template>
+                        Сбросить
+                    </n-button>
+                    <n-button @click="update" type="success">
+                        <template #icon>
+                            <SaveOutline />
+                        </template>
+                        Сохранить
+                    </n-button>
+                </div>
+
+            </n-card>
+        </n-spin>
     </n-modal>
 </template>
