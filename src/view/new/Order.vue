@@ -134,7 +134,13 @@ const details = reactive({
                     case 4: return 'CARD'
                     case 5: return 'VISA'
                     case 6: return 'MCARD'
-                    case 7: return 'PAYZE'
+                    case 7: {
+                        if(row.payze && row.payze.card && row.payze.card.cardBrand){
+                            return row.payze.card.cardBrand
+                        } else {
+                            return 'PAYZE'
+                        }
+                    }
                 }
             },
             sorter: 'default',
@@ -281,6 +287,8 @@ const getOrders = onMounted(async () => {
     orders.value = (await axios.get('order/list/items', {
         params: details.query
     })).data
+
+    console.log(orders.value.data.data);
 })
 
 const filter = (filters, sourceColumn) => {
